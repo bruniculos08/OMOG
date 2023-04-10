@@ -13,7 +13,7 @@ using namespace Eigen;
 
 int degree = 3;
 int components_num = 3;
-double t[] = {0, 1};
+double t[] = {-1, 1};
 
 class HermiteCurve3D{
     public:
@@ -48,7 +48,6 @@ class HermiteCurve3D{
 // Obs.: return type may not be specified on a constructorC/C++(963)
 HermiteCurve3D::HermiteCurve3D(MatrixXd A){
     (*this).Coeffs = A;
-
 }
 
 MatrixXd cubic_hermite_coeffs(Vector3d p0, Vector3d p1, Vector3d u0, Vector3d u1){
@@ -87,36 +86,30 @@ int main(void){
     result = cubic_hermite_coeffs(p0, p1, u0, u1);
     std::cout << "The solution is:\n" << result << std::endl;
 
-    HermiteCurve3D curve(result);  
-    // double ti = 1;  
-    // std::cout << "P(" << ti << ") = (" << curve.calc_X(ti) << ", " << curve.calc_Y(ti) << ", " << curve.calc_Z(ti) << ")" << std::endl;
+    HermiteCurve3D curve(result);
 
     int num_of_points = 1000;
-    std::vector<double> x_points;
-    std::vector<double> y_points;
-    std::vector<double> z_points;
-    double ti = 0;
+    std::vector<double> x_points, y_points, z_points;
+
+    double extra_interval = 5, ti = t[0] - extra_interval;
     for(int i = 0; i < num_of_points; i++){
         x_points.push_back(curve.calc_X(ti));
         y_points.push_back(curve.calc_Y(ti));
         z_points.push_back(curve.calc_Z(ti));
-        ti += 1.0/num_of_points;
+        ti += (extra_interval+t[1]-t[0])/num_of_points;
     }
 
     Gnuplot gp("gnuplot");
     // // Obs.: por enquanto estou plotando em 2D.
     gp << "set title 'Graph of hermite curve'\n";
 
-    std::vector<std::pair<double, double>> x_y_points;
-    for(int i = 0; i < num_of_points; i++){
-        x_y_points.push_back(std::make_pair(x_points[i], y_points[i]));
 
-    }
+    std::vector<std::pair<double, double>> x_y_points;
+    for(int i = 0; i < num_of_points; i++) x_y_points.push_back(std::make_pair(x_points[i], y_points[i]));
 
     gp << "plot '-'  with lines title 'points'\n";
     gp.send1d(x_y_points);
-
-
-    // falta ainda plotar os vetores tangentes
+    
+    std::cout << "\nType any buttom to exit\n";
     std::cin.get();
 }

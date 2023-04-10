@@ -63,7 +63,8 @@ if __name__ == '__main__':
 
     f = build_func(coeffs)
 
-    t = np.linspace(0, 1, 100)
+    extra_interval = 5
+    t = np.linspace(0-extra_interval, 1+extra_interval, 1000)
     fx = [f(ti)[0] for ti in t]
     fy = [f(ti)[1] for ti in t]
 
