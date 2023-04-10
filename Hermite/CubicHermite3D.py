@@ -22,14 +22,19 @@ def cubic_hermite_coeffs(p0, p1, u0, u1, t):
             T_line.append(value)
         T.append(T_line)
 
-    # Iremos montar agora a matriz que contém os valores do lado direito da equação matricial que montamos na folha;
+    print("T:")
+    print(T)
 
+    # Iremos montar agora a matriz que contém os valores do lado direito da equação matricial que montamos na folha;
     Coords_and_Vectors = [[], [], [], []]
     for i in range(0, 3):
         Coords_and_Vectors[0].append(p0[i])
         Coords_and_Vectors[1].append(p1[i])
         Coords_and_Vectors[2].append(u0[i])
         Coords_and_Vectors[3].append(u1[i])
+
+    print("Cord and Vectors:")
+    print(Coords_and_Vectors)
 
     # Note que os coeficientes de cada coordenada, na matriz escalonada estão na coluna referente a respectiva coordenada:
     return np.linalg.solve(T, Coords_and_Vectors)
@@ -48,11 +53,13 @@ def build_func(coeffs):
 
 
 if __name__ == '__main__':
-    p0 = [0, 0.5, 0]
-    p1 = [0, 1.2, 0]
+    p0 = [0, 0, 0]
+    p1 = [0, 1, 0]
     u0 = [2, 5, 0]
-    u1 = [-2, 5, 0]
+    u1 = [2, -5, 0]
     coeffs = cubic_hermite_coeffs(p0, p1, u0, u1, [0, 1])
+
+    print(coeffs)
 
     f = build_func(coeffs)
 
