@@ -35,11 +35,11 @@ def line_funcs(pA, pB):
     return x_line, y_line, z_line
 
     
-
+# A grande beleza de uma curva de Bezier é ela terminar dentro do polígono
 if __name__ == '__main__':
     p0 = [0, 0, 0]
     p1 = [1, 1, 0]
-    p2 = [2, 1, 0]
+    p2 = [3, 1.5, 0]
 
 
     extra_interval = 0
