@@ -34,16 +34,55 @@ def line_funcs(pA, pB):
     
     return x_line, y_line, z_line
 
+def build_lerp(p0, p1):
+    def lerp_x(u):
+        return (1-u)*p0[0] + u*p1[0]    
+    def lerp_y(u):
+        return (1-u)*p0[1] + u*p1[1]
+    def lerp_z(u):
+        return (1-u)*p0[2] + u*p1[2] 
+    return lerp_x, lerp_y, lerp_z
+
+def lerp(p0, p1, u):
+    lerp_x = (1-u)*p0[0] + u*p1[0]
+    lerp_y = (1-u)*p0[1] + u*p1[1]
+    lerp_z = (1-u)*p0[2] + u*p1[2]
+    return [lerp_x, lerp_y, lerp_z]
+
+def calc_bezier(points, u):
+    global flag
     
+    n = len(points)-1
+    for i in range(n, -1, -1):
+        for j in range(0, i, 1):
+            point = lerp(points[j], points[j+1], u)
+            points[j] = point
+    
+    # Ao final points conterá o ponto calculado na primeira posição (0): 
+    return points[0]
+
+def plot_poligon(points):
+    plt.rcParams["figure.autolayout"] = True
+
+    i = 0
+    for i in range(0, len(points)-1):
+        x = [points[i][0], points[i+1][0]] 
+        y = [points[i][1], points[i+1][1]]
+        plt.plot(x, y, 'bo', linestyle="--")
+
+    plt.rcParams["figure.autolayout"] = False
+
+
 # A grande beleza de uma curva de Bezier é ela terminar dentro do polígono
 if __name__ == '__main__':
+
+    # Exemplo da função que calcula apenas curvas de bezier de grau 2 (3 pontos por segmento):
     p0 = [0, 0, 0]
     p1 = [1, 1, 0]
-    p2 = [3, 1.5, 0]
-
+    p2 = [2, 1, 0]
 
     extra_interval = 0
-    U = np.linspace(0-extra_interval, 1+extra_interval, 1000)
+    U = np.linspace(0.0-extra_interval, 1+extra_interval, 1000)
 
     xf, yf, zf = quad_bezier_funcs(p0, p1, p2)
     X = [xf(ui) for ui in U]
@@ -53,28 +92,28 @@ if __name__ == '__main__':
     plt.xlim(-0.5,4)
     plt.ylim(0,2)
 
-    plt.plot(X, Y, label = "blue")
-
-    # Linha de p0 até p1:
-    U = np.linspace(0, 1, 1000)
-    x_line_func, y_line_func, z_line_func = line_funcs(p0, p1)
-    X = [x_line_func(ui) for ui in U]
-    Y = [y_line_func(ui) for ui in U]
-    Z = [z_line_func(ui) for ui in U]
-
-    plt.plot(X, Y, label = "green")
-
-    # Linha de p1 até p2:
-    U = np.linspace(0, 1, 1000)
-    x_line_func, y_line_func, z_line_func = line_funcs(p1, p2)
-    X = [x_line_func(ui) for ui in U]
-    Y = [y_line_func(ui) for ui in U]
-    Z = [z_line_func(ui) for ui in U]
-
-    plt.plot(X, Y, label = "orange")
-
-
-
+    plt.plot(X, Y, color = "orange")
     plt.savefig("Exemplo01-Bezier.png")
+    #plt.show()
+    plt.close()
+
+
+    # Exemplo da função que calcular curvas de bezier para quaisquer número de pontos (o grau é igual ao número de pontos menos um (n-1)):
+    points = [[0, 0, 0], [0.5, 1.5, 0], [1.25, 1.5, 0] ,[2.5, 1.5, 0], [1.5, 0.5, 0]]
+    plot_poligon(points)
+
+    extra_interval = 0
+    U = np.linspace(0.0-extra_interval, 1+extra_interval, 1000)
+    P = [calc_bezier(points, ui) for ui in U]
+    
+    X = [point[0] for point in P]
+    Y = [point[1] for point in P]
+    Z = [point[2] for point in P]
+    
+    plt.xlim(-0.5,4)
+    plt.ylim(-1,2)
+
+    plt.plot(X, Y, color = "green")
+    plt.savefig("Exemplo02-Bezier.png")
     plt.show()
     plt.close()
