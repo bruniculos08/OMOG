@@ -99,7 +99,8 @@ if __name__ == '__main__':
 
 
     # Exemplo da função que calcular curvas de bezier para quaisquer número de pontos (o grau é igual ao número de pontos menos um (n-1)):
-    points = [[0, 0, 0], [0.5, 1.5, 0], [1.25, 1.5, 0] ,[2.5, 1.5, 0], [1.5, 0.5, 0]]
+    points = [[0, 0, 0], [0.5, 1.5, 0], [1.25, 2, 0] ,[2.5, 1.5, 0], [1.5, 0.5, 0], [4, -1.5, 0], [4, 0, 0], [5, 1, 0]]
+    # points = [[0, 0, 0], [0.5, 1.5, 0], [2.25, 0, 0]]
     plot_poligon(points)
 
     extra_interval = 0
@@ -110,8 +111,8 @@ if __name__ == '__main__':
     Y = [point[1] for point in P]
     Z = [point[2] for point in P]
     
-    plt.xlim(-0.5,4)
-    plt.ylim(-1,2)
+    plt.xlim(-0.5,7)
+    plt.ylim(-2,3)
 
     plt.plot(X, Y, color = "green")
     plt.savefig("Exemplo02-Bezier.png")
