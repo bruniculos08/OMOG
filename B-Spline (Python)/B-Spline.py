@@ -67,7 +67,8 @@ if __name__ == "__main__":
     n = len(points)-1
     # (ii) D define o grau da curva BSpline que terá então grau D-1:
     D = 3
-    # Obs.: a curva será C_k-2 , isto é, continua até (k-2)-ésima derivada; 
+    # Obs. 1: a curva será C_k-2 , isto é, continua até (k-2)-ésima derivada; 
+    # Obs. 2: se D = n+1 teremos uma Bézier com n+1 pontos de controle; 
 
     # (iii) O algoritmo que estamos utilizando para o número de nós força que a curva passe...
     # ... pelo primeiro e último ponto:
