@@ -3,16 +3,21 @@ from math import *
 import matplotlib.pyplot as plt
 import numpy as np
 
+# Estou a partir deste código usando como referência as seguintes notas de aula:
+# https://web.cse.ohio-state.edu/~dey.8/course/784/
+
 def N_func(u, i, D, T):
     
     if(D == 1):
-        if(T[i] <= u <= T[i+1]):
+        if(T[i] <= u < T[i+1]):
             return 1
         else:
             return 0
 
     first_term = 0
     second_term = 0
+
+    #Obs.: para 
 
     if(T[i+D-1] - T[i] != 0):
         first_term = (u - T[i])*N_func(u, i, D-1, T)/(T[i+D-1] - T[i])
@@ -70,9 +75,10 @@ if __name__ == "__main__":
     U = np.linspace(0.0, n-D+2, 1000)
     P = [calc_BSpline(points, ui, D, T) for ui in U]
 
-    X = [point[0] for point in P]
-    Y = [point[1] for point in P]
-    Z = [point[2] for point in P]
+    # Se deixar o último valor de u ele irá ligar o último ponto ao ponto inicial:
+    X = [point[0] for point in P[0:-2]]
+    Y = [point[1] for point in P[0:-2]]
+    Z = [point[2] for point in P[0:-2]]
 
     plt.xlim(-0.5,7)
     plt.ylim(-2,3)
