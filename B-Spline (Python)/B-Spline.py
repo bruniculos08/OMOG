@@ -63,19 +63,25 @@ if __name__ == "__main__":
 
     points = [[0, 0, 0], [0.5, 1.5, 0], [1.25, 2, 0] ,[2.5, 1.5, 0], [1.5, 0.5, 0], [4, -1.5, 0], [4, 0, 0], [5, 1, 0]]
 
-    # O número de pontos é n+1
+    # (i) O número de pontos é n+1
     n = len(points)-1
-    # D define o grau da curva BSpline que terá então grau D-1
+    # (ii) D define o grau da curva BSpline que terá então grau D-1:
     D = 3
+    # Obs.: a curva será C_k-2 , isto é, continua até (k-2)-ésima derivada; 
 
+    # (iii) O algoritmo que estamos utilizando para o número de nós força que a curva passe...
+    # ... pelo primeiro e último ponto:
     T = getKnots(n, D)
     print(T)
 
+    # (iv) Plotando o polígono de controle:
     plot_poligon(points)
+
     U = np.linspace(0.0, n-D+2, 1000)
     P = [calc_BSpline(points, ui, D, T) for ui in U]
 
-    # Se deixar o último valor de u ele irá ligar o último ponto ao ponto inicial:
+    # Obs.: se deixarmos o último valor de u para ser calculado o plot irá ligar o último ponto...
+    # ... ao ponto inicial:
     X = [point[0] for point in P[0:-2]]
     Y = [point[1] for point in P[0:-2]]
     Z = [point[2] for point in P[0:-2]]
