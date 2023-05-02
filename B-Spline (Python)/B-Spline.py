@@ -90,6 +90,13 @@ if __name__ == "__main__":
     plt.xlim(-0.5,7)
     plt.ylim(-2,3)
 
+    # size = len(X)
+
+    # for i in enumerate(segments):
+    #     hexadecimal = "#"+''.join([random.choice('ABCDEF0123456789') for i in range(6)])
+    #     magical_number = int(len(X)/pieces)
+    #     plt.plot(X[magical_number*i:magical_number* i+1], Y[magical_number*i:magical_number* i+1], color = hexadecimal)
+
     plt.plot(X, Y, color = "green")
     plt.savefig("Exemplo01-BSpline.png")
     plt.show()
