@@ -61,12 +61,14 @@ def plot_poligon(points):
 if __name__ == "__main__":
     print("Hello World!")
 
-    points = [[0, 0, 0], [0.5, 1.5, 0], [1.25, 2, 0] ,[2.5, 1.5, 0], [1.5, 0.5, 0], [4, -1.5, 0], [4, 0, 0], [5, 1, 0]]
+    points = [[0, 0, 0], [0.5, 1.5, 0], [1.25, 2, 0] ,
+              [2.5, 1.5, 0], [1.5, 0.5, 0], [4, -1.5, 0], 
+              [4, 0, 0], [5, 1, 0], [6, 0, -1]]
 
     # (i) O número de pontos é n+1
     n = len(points)-1
     # (ii) D define o grau da curva BSpline que terá então grau D-1:
-    D = 3
+    D = 4
     # Obs. 1: a curva será C_k-2 , isto é, continua até (k-2)-ésima derivada; 
     # Obs. 2: se D = n+1 teremos uma Bézier com n+1 pontos de controle; 
 
@@ -81,6 +83,9 @@ if __name__ == "__main__":
     U = np.linspace(0.0, n-D+2, 1000)
     P = [calc_BSpline(points, ui, D, T) for ui in U]
 
+    segments = list(set(T))
+    print(segments)
+
     # Obs.: se deixarmos o último valor de u para ser calculado o plot irá ligar o último ponto...
     # ... ao ponto inicial:
     X = [point[0] for point in P[0:-2]]
@@ -90,14 +95,18 @@ if __name__ == "__main__":
     plt.xlim(-0.5,7)
     plt.ylim(-2,3)
 
-    # size = len(X)
 
-    # for i in enumerate(segments):
-    #     hexadecimal = "#"+''.join([random.choice('ABCDEF0123456789') for i in range(6)])
-    #     magical_number = int(len(X)/pieces)
-    #     plt.plot(X[magical_number*i:magical_number* i+1], Y[magical_number*i:magical_number* i+1], color = hexadecimal)
+    for i, segment in enumerate(segments[0:-1]):
+        piece = [calc_BSpline(points, ui, D, T) for ui in U if segment <= ui <= segments[i+1]]
+        X = [point[0] for point in piece[0:-2]]
+        Y = [point[1] for point in piece[0:-2]]
+        Z = [point[2] for point in piece[0:-2]]
 
-    plt.plot(X, Y, color = "green")
+        hexadecimal = "#"+''.join([random.choice('ABCDEF0123456789') for i in range(6)])
+        plt.plot(X, Y, color = hexadecimal)
+        
+
+    
     plt.savefig("Exemplo01-BSpline.png")
     plt.show()
     plt.close()
