@@ -11,7 +11,10 @@ import numpy as np
 # ... de modo que a complexidade é de O(2^D).
 
 def N_func(u, i, D, T):
-    
+
+    global counter
+    counter += 1
+
     if(D == 1):
         if(T[i] <= u < T[i+1]):
             return 1
@@ -65,7 +68,9 @@ def plot_poligon(points):
     plt.rcParams["figure.autolayout"] = False
 
 if __name__ == "__main__":
-    print("Hello World!")
+
+    global counter
+    counter = 0
 
     points = [[0, 0, 0], [0.5, 1.5, 0], [1.25, 2, 0] ,
               [2.5, 1.5, 0], [1.5, 0.5, 0], [4, -1.5, 0], 
@@ -90,7 +95,7 @@ if __name__ == "__main__":
     plot_poligon(points)
 
     U = np.linspace(0.0, n-D+2, 1000)
-    P = [calc_BSpline(points, ui, D, T) for ui in U]
+    # P = [calc_BSpline(points, ui, D, T) for ui in U]
 
     # (v) os segmentos são formados pelos intervalos de tamanho maior que 0 no vetor de nós pois estes são os intervalos...
     # ... em que diferentes pontos de controle tem influência visto que em um determinado intervalo [T[i], T[i+1]] determinadas funções...
@@ -113,19 +118,20 @@ if __name__ == "__main__":
 
     # Obs.: se deixarmos o último valor de u para ser calculado o plot irá ligar o último ponto...
     # ... ao ponto inicial:
-    X = [point[0] for point in P[0:-2]]
-    Y = [point[1] for point in P[0:-2]]
-    Z = [point[2] for point in P[0:-2]]
+    
+    # X = [point[0] for point in P[0:-2]]
+    # Y = [point[1] for point in P[0:-2]]
+    # Z = [point[2] for point in P[0:-2]]
 
+    # (vi) Ajuste de limites do gráfico:
     plt.xlim(-0.5,7)
     plt.ylim(-2,3)
 
-
     for i, segment in enumerate(segments[0:-1]):
         piece = [calc_BSpline(points, ui, D, T) for ui in U if segment <= ui <= segments[i+1]]
-        X = [point[0] for point in piece[0:-2]]
-        Y = [point[1] for point in piece[0:-2]]
-        Z = [point[2] for point in piece[0:-2]]
+        X = [point[0] for point in piece[0:-1]]
+        Y = [point[1] for point in piece[0:-1]]
+        Z = [point[2] for point in piece[0:-1]]
 
         hexadecimal = "#"+''.join([random.choice('ABCDEF0123456789') for i in range(6)])
         plt.plot(X, Y, color = hexadecimal)
@@ -133,3 +139,5 @@ if __name__ == "__main__":
     plt.savefig("Exemplo01-BSpline.png")
     plt.show()
     plt.close()
+
+    print("contador de número etapas (eficiência) =  ", counter)
