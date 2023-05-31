@@ -107,8 +107,8 @@ if __name__ == "__main__":
               [4, 0, 0], [5, 1, 0], [6, 3, 0]]
 
     weights = [1 for point in points]
-    weights[3] = 0.1
-    weights[4] = 2
+    weights[3] = 1
+    weights[4] = 1
 
     # (i) O número de pontos é n+1
     n = len(points)-1
