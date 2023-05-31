@@ -59,8 +59,10 @@ Função equivalente a aplicar a matriz de rotação no eixo z
 """
 def rotate_z_axis(points, alpha):
     for point in points:
-        point[0] = cos(alpha)*point[0] - sin(alpha)*point[1]
-        point[1] = sin(alpha)*point[0] + cos(alpha)*point[1]
+        new_x = cos(alpha)*point[0] - sin(alpha)*point[1]
+        new_y = sin(alpha)*point[0] + cos(alpha)*point[1]
+        point[0] = new_x
+        point[1] = new_y
     return points
 
 """
@@ -123,24 +125,20 @@ if __name__ == '__main__':
 
     # Exemplo da função que calcular curvas de bezier para quaisquer número n+1 de pontos:
     # Obs.: o grau é igual ao número de pontos menos um, isto é, n.
-    bezier_points = [[0, 0, 0], [0.5, 2, 0], [1.25, 2, 0],
+    bezier_points = [[0, 0, 0], [-1, 2, 0], [1.25, 2, 0],
                      [2.5, 1.5, 0], [1.5, 0.5, 0], [4, -1.5, 0], 
                      [4, 0, 0], [5, 1, 0]]
 
     delta = calc_vector(bezier_points[0], bspline_points[-1])
-
     bezier_points = translate(bezier_points, delta[0], delta[1], delta[2])
+    
     bezier_points = ajust_control_points(bspline_points, bezier_points)
-
-    print(bspline_points)
-    print(bezier_points)
 
     plt.xlim(-1,12)
     plt.ylim(-2,8)
 
     plot_Bezier(bezier_points)
     plot_BSpline(bspline_points)
-
 
     plt.savefig("Exemplo-Join-BSpline-Bezier.png")
     plt.show()
