@@ -202,10 +202,6 @@ if __name__ == "__main__":
                         Point(2.5, 1.5, 0), Point(1.5, 0.5, 0), Point(4, -1.5, 0), 
                         Point(4, 0, 0), Point(5, 1, 0), Point(3, 2, 0)]
 
-    # bezier_points = [Point(0, 0, 0), Point(-1, 2, 0), Point(1.25, 2, 0),
-    #                  Point(2.5, 1.5, 0), Point(1.5, 0.5, 0), Point(4, -1.5, 0), 
-    #                  Point(4, 0, 0), Point(5, 1, 0)]
-    
     bezier_points = [Point(0, 0, 0), Point(0.5, 2, 0), Point(1.25, 2, 0) , Point(2.5, 1.5, 0), 
               Point(1.5, 0.5, 0), Point(4, -1.5, 0), Point(4, 0, 0), Point(5, 1, 0)]
     
