@@ -88,18 +88,18 @@ def derivative_N_func(u, i, D, T):
     first_term = 0
     second_term = 0
 
-    if(T[i+D-1] - T[i-1] != 0):
-        first_term = D/(T[i+D] - T[i])
+    if(T[i+D-1] - T[i] != 0):
+        first_term = (D-1)/(T[i+D-1] - T[i])
 
-    if(T[i+D] - T[i] != 0):
-        second_term = D/(T[i+D] - T[i])
+    if(T[i+D] - T[i+1] != 0):
+        second_term = (D-1)/(T[i+D] - T[i+1])
 
     return first_term * N_func(u, i, D-1, T) - second_term * N_func(u, i+1, D-1, T)
 
 def calc_BSpline(points, u, D, T):
     p = Point(0, 0, 0)
     n = len(points)-1
-    for i in range(0, n):
+    for i in range(0, n+1):
         p.x += points[i].x * N_func(u, i, D, T)
         p.y += points[i].y * N_func(u, i, D, T)
         p.z += points[i].z * N_func(u, i, D, T)
@@ -113,6 +113,12 @@ def calc_derivative_BSpline(points, u, D, T):
         p.y += points[i].y * derivative_N_func(u, i, D, T)
         p.z += points[i].z * derivative_N_func(u, i, D, T)
     return p
+
+def BSpline_endPoint_derivative(points, D, T):
+    n = len(points)-1
+    Q = get_vector(points[n-1], points[n])
+    term = (D-1)/(T[n+D-1] - T[n])
+    return Point(Q.x * term, Q.y * term, Q.z * term)
 
 def getKnots(n, D):
     T = []
@@ -175,13 +181,12 @@ def magnitude(vector : Point) -> float:
     return sqrt(pow(vector.x, 2) + pow(vector.y, 2) + pow(vector.z, 2))
 
 def fix_C1(bspline_points, bezier_points, D, T):
-    S = calc_derivative_BSpline(bspline_points, T[-1], D, T)
-    print(S.x, S.y, S.z)
-
+    dS = BSpline_endPoint_derivative(bspline_points, D, T)
+    print("DS_n = (", dS.x, ",", dS.y, ",", dS.z, ")")
     m = len(bezier_points) - 1
     B0 = bezier_points[0]
-
-    B1 = Point(S.x/m + B0.x, S.y/m + B0.y, S.z/m + B0.z)
+    B1 = Point(dS.x/m + B0.x, dS.y/m + B0.y, dS.z/m + B0.z)
+    print("B1 = (", B1.x, ",", B1.y, ",", B1.z, ")")
     bezier_points[1] = B1
 
 def fix_C0(bspline_points, bezier_points):
@@ -195,7 +200,7 @@ if __name__ == "__main__":
 
     bspline_points = [Point(0, 0, 0), Point(0.5, 1.5, 0), Point(1.25, 2, 0),
                         Point(2.5, 1.5, 0), Point(1.5, 0.5, 0), Point(4, -1.5, 0), 
-                        Point(4, 0, 0), Point(5, 1, 0), Point(4, 2, 0)]
+                        Point(4, 0, 0), Point(5, 1, 0), Point(3, 2, 0)]
 
     # bezier_points = [Point(0, 0, 0), Point(-1, 2, 0), Point(1.25, 2, 0),
     #                  Point(2.5, 1.5, 0), Point(1.5, 0.5, 0), Point(4, -1.5, 0), 
