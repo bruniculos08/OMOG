@@ -86,6 +86,6 @@ if __name__ == '__main__':
     print("|v0| = ", magnitude(get_vector(points[2], points[3])))
     print("|v1| = ", magnitude(get_vector(newPoints[2], newPoints[3])))
 
-    plt.savefig("Exemplo-Bezier.png")
+    plt.savefig("Exemplo-Bezier-Organized.png")
     plt.show()
     plt.close()

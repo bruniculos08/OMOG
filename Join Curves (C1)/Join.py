@@ -1,16 +1,135 @@
-from Bezier import *
-from BSplineDynamic import *
 import numpy as np
+import random as random
+import matplotlib.pyplot as plt
+from copy import deepcopy
+from math import *
 
-def plot_BSpline(points):
+class Point:
+    x : float
+    y : float
+    z : float
+    
+    def __init__(self, x, y, z):
+        self.x = x
+        self.y = y
+        self.z = z
+
+"""
+Funções relacionadas a curva de Bézier:
+"""
+def lerp(u : float, p0 : Point, p1 : Point) -> Point:
+    x = u*p0.x + (1-u)*p1.x
+    y = u*p0.y + (1-u)*p1.y
+    z = u*p0.z + (1-u)*p1.z
+    return Point(x, y, z)
+
+def calc_bezier(u : float, points : list) -> Point:
+    temp = points.copy()
+
+    n = len(temp) - 1
+    for i in range(n, -1, -1):
+        for j in range(0, i):
+            temp[j] = lerp(u, temp[j], temp[j+1])
+
+    return temp[0]
+
+def plot_bezier(points : list, c : str):
+
+    U = np.linspace(0.0, 1, 1000)
+    P = [calc_bezier(ui, points) for ui in U]
+
+    X = [point.x for point in P]
+    Y = [point.y for point in P]
+    Z = [point.z for point in P]
+
+    plt.plot(X, Y, color = c)
+
+"""
+Funções Relacionadas a curva B-Spline:
+"""
+def N_func(u, i, D, T):
+    
+    # (i) Seja a função N_i_D(u):
+    N = []
+    # (ii) Equivalente à:
+    # for(k = 1; k <= D; k++) varia o 'd'
+    for k in range(1, D+1):
+        # (ii) a. Note que nos casos base, isto é, parte de baixo da árvore temos funções N_j_k onde k = 1, e note que para esta matriz...
+        # ... o índice da linha é k-1 e o índice da coluna é j, assim N_j_k = N[k-1][j] (k-1 pois k começa em 1):
+        line = []
+        # (ii) b. para cada nível k da árvore as folhas são da forma N_j_k onde  i <= j <= i+D-k:
+        # for(j = i; j <= i+D-k; j++) varia o 'i'
+        for j in range(i, (i+D-k) + 1):
+            if(k == 1):
+                if(T[j] <= u < T[j+1]):
+                    line.append(1)
+                else:
+                    line.append(0)
+            else:
+                # (ii) c. aqui ocorre quando k > 1, e portanto já há uma linha N[k] (obs.: os índices de N estarão invertidos)
+                first_term = 0
+                second_term = 0
+                if(T[j+k-1]-T[j] != 0):
+                    # (ii) d. faz-se j-i pois quando j = i tem-se j-i = 0, assim não teremos problema com os índices e não precisaremos...
+                    # ... calcular as funções com 0 <= j < i apenas para preencher a linha:
+                    first_term = (u - T[j])*N[k-1-1][j-i]/(T[j+k-1] - T[j])
+                if(T[j+k]-T[j+1] != 0):
+                    # (ii) d. faz-se j-i pois quando j = i tem-se j-i = 0, assim não teremos problema com os índices e não precisaremos...
+                    # ... calcular as funções com 0 <= j < i apenas para preencher a linha:
+                    second_term = (T[j+k] - u)*N[k-1-1][j+1-i]/(T[j+k] - T[j+1])
+                line.append(first_term + second_term)
+        # (iii) Adicionando linha (k-1)-ésima linha a matriz N:
+        N.append(line)
+    
+    # a matriz na posição N[D-1][0] equivale a função base N_i_d (o "i" é o primeiro índice da coluna da matriz e d-1 é a linha):
+    return N[D-1][0]
+
+def derivative_N_func(u, i, D, T):
+    first_term = 0
+    second_term = 0
+
+    if(T[i+D-1] - T[i-1] != 0):
+        first_term = D/(T[i+D] - T[i])
+
+    if(T[i+D] - T[i] != 0):
+        second_term = D/(T[i+D] - T[i])
+
+    return first_term * N_func(u, i, D-1, T) - second_term * N_func(u, i+1, D-1, T)
+
+def calc_BSpline(points, u, D, T):
+    p = Point(0, 0, 0)
+    n = len(points)-1
+    for i in range(0, n):
+        p.x += points[i].x * N_func(u, i, D, T)
+        p.y += points[i].y * N_func(u, i, D, T)
+        p.z += points[i].z * N_func(u, i, D, T)
+    return p
+
+def calc_derivative_BSpline(points, u, D, T):
+    p = Point(0, 0, 0)
+    n = len(points)-1
+    for i in range(0, n+1):
+        p.x += points[i].x * derivative_N_func(u, i, D, T)
+        p.y += points[i].y * derivative_N_func(u, i, D, T)
+        p.z += points[i].z * derivative_N_func(u, i, D, T)
+    return p
+
+def getKnots(n, D):
+    T = []
+    for j in range(0, n+D+1):
+        if(j < D):
+            T.append(0)
+        elif(D <= j <= n):
+            T.append(j-D+1)
+        else:
+            T.append(n-D+2)
+    return T
+
+def plot_bspline(points, D, T):
 
     n = len(points)-1
-    D = 4
-
-    T = getKnots(n, D)
     print(T)
 
-    plot_poligon(points)
     U = np.linspace(0.0, n-D+2, 1000)
 
     segments = list(set(T))
@@ -18,127 +137,85 @@ def plot_BSpline(points):
 
     for i, segment in enumerate(segments[0:-1]):
         piece = [calc_BSpline(points, ui, D, T) for ui in U if segment <= ui <= segments[i+1]]
-        X = [point[0] for point in piece[0:-1]]
-        Y = [point[1] for point in piece[0:-1]]
-        Z = [point[2] for point in piece[0:-1]]
+        X = [point.x for point in piece[0:-1]]
+        Y = [point.y for point in piece[0:-1]]
+        Z = [point.z for point in piece[0:-1]]
 
         hexadecimal = "#"+''.join([random.choice('ABCDEF0123456789') for i in range(6)])
         plt.plot(X, Y, color = hexadecimal)
 
+"""
+Funções para continuidade entre as curvas B-Spline:
+"""
+def plot_poligon(points : list, c : str) -> None:
+    plt.rcParams["figure.autolayout"] = True
 
-def plot_Bezier(points):
+    for i in range(0, len(points)-1):
+        x = [points[i].x, points[i+1].x] 
+        y = [points[i].y, points[i+1].y]
+        plt.plot(x, y, 'bo', linestyle="--", color = c)
 
-    plot_poligon(points)
-    U = np.linspace(0, 1, 1000)
-    P = [calc_bezier(points, ui) for ui in U]
+    plt.rcParams["figure.autolayout"] = False
+
+def rotate_z_axis(points : list, angle : float) -> list:
+    newPoints = deepcopy(points)
+    for p in newPoints:
+        new_x = p.x * cos(angle) - p.y * sin(angle)
+        new_y = p.y * cos(angle) + p.x * sin(angle)
+        new_z = p.z
+        p.x = new_x
+        p.y = new_y
+        p.z = new_z
+    return newPoints
+
+def get_vector(p0 : Point, p1 : Point) -> Point:
+    return Point(p1.x - p0.x, p1.y - p0.y, p1.z - p0.z)
+
+def magnitude(vector : Point) -> float:
+    return sqrt(pow(vector.x, 2) + pow(vector.y, 2) + pow(vector.z, 2))
+
+def fix_C1(bspline_points, bezier_points, D, T):
+    S = calc_derivative_BSpline(bspline_points, T[-1], D, T)
+    print(S.x, S.y, S.z)
+
+    m = len(bezier_points) - 1
+    B0 = bezier_points[0]
+
+    B1 = Point(S.x/m + B0.x, S.y/m + B0.y, S.z/m + B0.z)
+    bezier_points[1] = B1
+
+def fix_C0(bspline_points, bezier_points):
+    delta = get_vector(bezier_points[0], bspline_points[-1])
+    for point in bezier_points:
+        point.x += delta.x
+        point.y += delta.y
+        point.z += delta.z
+
+if __name__ == "__main__":
+
+    bspline_points = [Point(0, 0, 0), Point(0.5, 1.5, 0), Point(1.25, 2, 0),
+                        Point(2.5, 1.5, 0), Point(1.5, 0.5, 0), Point(4, -1.5, 0), 
+                        Point(4, 0, 0), Point(5, 1, 0), Point(4, 2, 0)]
+
+    # bezier_points = [Point(0, 0, 0), Point(-1, 2, 0), Point(1.25, 2, 0),
+    #                  Point(2.5, 1.5, 0), Point(1.5, 0.5, 0), Point(4, -1.5, 0), 
+    #                  Point(4, 0, 0), Point(5, 1, 0)]
     
-    X = [point[0] for point in P]
-    Y = [point[1] for point in P]
-    Z = [point[2] for point in P]
+    bezier_points = [Point(0, 0, 0), Point(0.5, 2, 0), Point(1.25, 2, 0) , Point(2.5, 1.5, 0), 
+              Point(1.5, 0.5, 0), Point(4, -1.5, 0), Point(4, 0, 0), Point(5, 1, 0)]
     
-    plt.plot(X, Y, color = "blue")
-    
+    fix_C0(bspline_points, bezier_points)
 
-def translate(points, delta_x, delta_y, delta_z):
-    for point in points:
-        point[0] += delta_x
-        point[1] += delta_y
-        point[2] += delta_z
-    return points
+    n = len(bspline_points) - 1
+    D = 4
+    T = getKnots(n, D)
+    fix_C1(bspline_points, bezier_points, D, T)
 
-"""
-Função que retorna um vetor, dados dois pontos p0 e p1
-"""
-def calc_vector(p0, p1):
-    v = [p1[0]-p0[0], p1[1]-p0[1], p1[2]-p0[2]]
-    return v
+    plot_poligon(bezier_points, "green")
+    plot_bezier(bezier_points, "green")
 
-
-"""
-Função equivalente a aplicar a matriz de rotação no eixo z
-"""
-def rotate_z_axis(points, alpha):
-    for point in points:
-        new_x = cos(alpha)*point[0] - sin(alpha)*point[1]
-        new_y = sin(alpha)*point[0] + cos(alpha)*point[1]
-        point[0] = new_x
-        point[1] = new_y
-    return points
-
-"""
-Função que realiza produto vetorial <v0, v1> considerando apenas as coordenadas x e y
-para que possamos calcular o angulô entre as componentes dos vetores <v0, v1> no plano xy 
-"""
-def dot_product_xy(v0, v1) -> float:
-    x0 = v0[0]
-    x1 = v1[0]
-    y0 = v0[1]
-    y1 = v1[1]
-    return x0*x1 + y0*y1
-
-"""
-Função para cálculo da magnitude da componente de um vetor v sobre o plano xy
-"""
-def mag_vector_xy(v) -> float:
-    return sqrt(v[0]**2 + v[1]**2)
-
-"""
-Função para cálculo do ângulo entre as compontes dos vetores v0 e v1 no plano xy
-"""
-def calc_angle_xy(v0, v1) -> float:
-    numerator = dot_product_xy(v0, v1)
-    denominator = mag_vector_xy(v0) * mag_vector_xy(v1)
-    cosseno = abs(numerator/denominator)
-    return np.arccos(cosseno)
-
-
-"""
-Função que ajusta o ângulo entre os pontos de controle de uma curva 1 e 2 para 
-obter G1 em relação ao plano xy
-"""
-def ajust_control_points(points_0, points_1):
-    v0 = calc_vector(points_0[-2], points_0[-1])
-    v1 = calc_vector(points_0[-1], points_1[1])
-
-    alpha = calc_angle_xy(v0, v1)
-    print("alpha = ", alpha)
-
-    initial_point = list(points_1[0])
-
-    translated_points = points_1
-    # É necessário colocar os pontos da curva sobre a origem para rotacioná-la:
-    translated_points = translate(translated_points, -initial_point[0], -initial_point[1], -initial_point[2])
-    
-    translated_points = rotate_z_axis(translated_points, -alpha)
-
-    points_1 = translate(translated_points, initial_point[0], initial_point[1], initial_point[2])
-
-
-    return points_1
-
-
-if __name__ == '__main__':
-
-    bspline_points = [[0, 0, 0], [0.5, 1.5, 0], [1.25, 2, 0],
-                        [2.5, 1.5, 0], [1.5, 0.5, 0], [4, -1.5, 0], 
-                        [4, 0, 0], [5, 1, 0], [6, 2, 0]]
-
-    # Exemplo da função que calcular curvas de bezier para quaisquer número n+1 de pontos:
-    # Obs.: o grau é igual ao número de pontos menos um, isto é, n.
-    bezier_points = [[0, 0, 0], [-1, 2, 0], [1.25, 2, 0],
-                     [2.5, 1.5, 0], [1.5, 0.5, 0], [4, -1.5, 0], 
-                     [4, 0, 0], [5, 1, 0]]
-
-    delta = calc_vector(bezier_points[0], bspline_points[-1])
-    bezier_points = translate(bezier_points, delta[0], delta[1], delta[2])
-    
-    bezier_points = ajust_control_points(bspline_points, bezier_points)
-
-    plt.xlim(-1,12)
-    plt.ylim(-2,8)
-
-    plot_Bezier(bezier_points)
-    plot_BSpline(bspline_points)
+    plot_poligon(bspline_points, "orange")
+    plot_bspline(bspline_points, D, T)
 
     plt.savefig("Exemplo-Join-BSpline-Bezier.png")
     plt.show()
