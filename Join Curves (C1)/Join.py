@@ -61,7 +61,7 @@ def N_func(u, i, D, T):
         # for(j = i; j <= i+D-k; j++) varia o 'i'
         for j in range(i, (i+D-k) + 1):
             if(k == 1):
-                if(T[j] <= u < T[j+1]):
+                if(T[j] < u <= T[j+1]):
                     line.append(1)
                 else:
                     line.append(0)
@@ -94,24 +94,27 @@ def derivative_N_func(u, i, D, T):
     if(T[i+D] - T[i+1] != 0):
         second_term = (D-1)/(T[i+D] - T[i+1])
 
-    return first_term * N_func(u, i, D-1, T) - second_term * N_func(u, i+1, D-1, T)
+    result = first_term * N_func(u, i, D-1, T) - second_term * N_func(u, i+1, D-1, T)
+    return result
 
 def calc_BSpline(points, u, D, T):
     p = Point(0, 0, 0)
     n = len(points)-1
     for i in range(0, n+1):
-        p.x += points[i].x * N_func(u, i, D, T)
-        p.y += points[i].y * N_func(u, i, D, T)
-        p.z += points[i].z * N_func(u, i, D, T)
+        N_i_D = N_func(u, i, D, T)
+        p.x += points[i].x * N_i_D
+        p.y += points[i].y * N_i_D
+        p.z += points[i].z * N_i_D
     return p
 
 def calc_derivative_BSpline(points, u, D, T):
     p = Point(0, 0, 0)
     n = len(points)-1
     for i in range(0, n+1):
-        p.x += points[i].x * derivative_N_func(u, i, D, T)
-        p.y += points[i].y * derivative_N_func(u, i, D, T)
-        p.z += points[i].z * derivative_N_func(u, i, D, T)
+        dN_i_D = derivative_N_func(u, i, D, T)
+        p.x += points[i].x * dN_i_D
+        p.y += points[i].y * dN_i_D
+        p.z += points[i].z * dN_i_D
     return p
 
 def BSpline_endPoint_derivative(points, D, T):
@@ -186,7 +189,6 @@ def fix_C1(bspline_points, bezier_points, D, T):
     m = len(bezier_points) - 1
     B0 = bezier_points[0]
     B1 = Point(dS.x/m + B0.x, dS.y/m + B0.y, dS.z/m + B0.z)
-    print("B1 = (", B1.x, ",", B1.y, ",", B1.z, ")")
     bezier_points[1] = B1
 
 def fix_C0(bspline_points, bezier_points):
@@ -200,7 +202,7 @@ if __name__ == "__main__":
 
     bspline_points = [Point(0, 0, 0), Point(0.5, 1.5, 0), Point(1.25, 2, 0),
                         Point(2.5, 1.5, 0), Point(1.5, 0.5, 0), Point(4, -1.5, 0), 
-                        Point(4, 0, 0), Point(5, 1, 0), Point(3, 2, 0)]
+                        Point(4, 0, 0), Point(5, 1, 0), Point(6, 1.2, 0)]
 
     bezier_points = [Point(0, 0, 0), Point(0.5, 2, 0), Point(1.25, 2, 0) , Point(2.5, 1.5, 0), 
               Point(1.5, 0.5, 0), Point(4, -1.5, 0), Point(4, 0, 0), Point(5, 1, 0)]
@@ -217,6 +219,9 @@ if __name__ == "__main__":
 
     plot_poligon(bspline_points, "orange")
     plot_bspline(bspline_points, D, T)
+
+    dP = calc_derivative_BSpline(bspline_points, T[-1], D, T)
+    print("BSpline derivative at end point = (", dP.x, ",", dP.y,",", dP.z, ")")
 
     plt.savefig("Exemplo-Join-BSpline-Bezier.png")
     plt.show()
