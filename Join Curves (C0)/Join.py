@@ -24,7 +24,7 @@ def lerp(u : float, p0 : Point, p1 : Point) -> Point:
     return Point(x, y, z)
 
 def calc_bezier(u : float, points : list) -> Point:
-    temp = points.copy()
+    temp = deepcopy(points)
 
     n = len(temp) - 1
     for i in range(n, -1, -1):
@@ -33,7 +33,7 @@ def calc_bezier(u : float, points : list) -> Point:
 
     return temp[0]
 
-def plot_bezier(points : list, c : str):
+def Plot_Bezier(points : list, c : str):
 
     U = np.linspace(0.0, 1, 1000)
     P = [calc_bezier(ui, points) for ui in U]
@@ -88,9 +88,10 @@ def calc_BSpline(points, u, D, T):
     p = Point(0, 0, 0)
     n = len(points)-1
     for i in range(0, n+1):
-        p.x += points[i].x * N_func(u, i, D, T)
-        p.y += points[i].y * N_func(u, i, D, T)
-        p.z += points[i].z * N_func(u, i, D, T)
+        N_i_D = N_func(u, i, D, T)
+        p.x += points[i].x * N_i_D
+        p.y += points[i].y * N_i_D
+        p.z += points[i].z * N_i_D
     return p
 
 def getKnots(n, D):
@@ -104,7 +105,7 @@ def getKnots(n, D):
             T.append(n-D+2)
     return T
 
-def plot_bspline(points, D, T):
+def Plot_BSpline(points, D, T):
 
     n = len(points)-1
     print(T)
@@ -124,9 +125,9 @@ def plot_bspline(points, D, T):
         plt.plot(X, Y, color = hexadecimal)
 
 """
-Funções para continuidade entre as curvas B-Spline:
+Funções para continuidade entre as curvas B-Spline e plotagem de polígonos de controle:
 """
-def plot_poligon(points : list, c : str) -> None:
+def Plot_Poligon(points : list, c : str) -> None:
     plt.rcParams["figure.autolayout"] = True
 
     for i in range(0, len(points)-1):
@@ -136,39 +137,77 @@ def plot_poligon(points : list, c : str) -> None:
 
     plt.rcParams["figure.autolayout"] = False
 
-def get_vector(p0 : Point, p1 : Point) -> Point:
+def getVector(p0 : Point, p1 : Point) -> Point:
     return Point(p1.x - p0.x, p1.y - p0.y, p1.z - p0.z)
 
-def magnitude(vector : Point) -> float:
-    return sqrt(pow(vector.x, 2) + pow(vector.y, 2) + pow(vector.z, 2))
-
-def fix_C0(bspline_points, bezier_points):
-    delta = get_vector(bezier_points[0], bspline_points[-1])
-    for point in bezier_points:
+def Force_C0_BSplineToBezier(lastPoint_BSpline, Bezier_Points):
+    delta = getVector(Bezier_Points[0], lastPoint_BSpline)
+    for point in Bezier_Points:
         point.x += delta.x
         point.y += delta.y
         point.z += delta.z
 
+def PointToString(P : Point) -> str:
+    return '(' + str(P.x) + ',' + str(P.y) + ',' + str(P.z) + ')'
+
+def get_MaxValues(listsOfPoints : list) -> Point:
+    x_max = x_min = listsOfPoints[0][0].x
+    y_max = y_min = listsOfPoints[0][0].y
+    z_max = z_min = listsOfPoints[0][0].z
+    for Points in listsOfPoints:
+        for P in Points:
+            x_max = max(x_max, P.x)
+            y_max = max(y_max, P.y)
+            z_max = max(z_max, P.z)
+            x_min = min(x_min, P.x)
+            y_min = min(y_min, P.y)
+            z_min = min(z_min, P.z)
+    return Point(x_max, y_max, z_max), Point(x_min, y_min, z_min)
+
 if __name__ == "__main__":
 
-    bspline_points = [Point(0, 0, 0), Point(0.5, 1.5, 0), Point(1.25, 2, 0),
-                        Point(2.5, 1.5, 0), Point(1.5, 0.5, 0), Point(4, -1.5, 0), 
-                        Point(4, 0, 0), Point(5, 1, 0), Point(4, 2, 0)]
+    # Pontos de controle da curva B-Spline:
+    BSpline_points = [Point(0, -1, 0), Point(0.5, 1.5, 0), Point(1.25, 2, 0),
+                      Point(2.5, 1.5, 0), Point(1.5, -1, 0), Point(4, -1.5, 0), 
+                      Point(4, 0, 0), Point(5, 1, 0), Point(4, 2, 0), Point(2, 4, 0)]
     
-    bezier_points = [Point(0, 0, 0), Point(0.5, 2, 0), Point(1.25, 2, 0) , Point(2.5, 1.5, 0), 
-              Point(1.5, 0.5, 0), Point(4, -1.5, 0), Point(4, 0, 0), Point(5, 1, 0)]
-    
-    fix_C0(bspline_points, bezier_points)
-
-    plot_poligon(bezier_points, "green")
-    plot_bezier(bezier_points, "green")
-
+    # Parâmetros da B-Spline:
     D = 4
-    n = len(bspline_points)-1
+    n = len(BSpline_points)-1
     T = getKnots(n, D)
 
-    plot_poligon(bspline_points, "orange")
-    plot_bspline(bspline_points, D, T)
+    # Pontos de controle da curva Bézier:
+    Bezier_Points = [Point(1, 0, 0), Point(1.5, 2, 0), Point(2.25, 2, 0) , 
+                     Point(2.5, 1.5, 0), Point(1.5, 0.5, 0), Point(3, -1.5, 0), 
+                     Point(4, -2, 0), Point(5, -3, 0)]
+
+    Flag = 2
+    print("Digite o número de acordo com o desejado: \n 1 - Bézier seguida de BSpline \n 2 - B-Spline seguida de Bézier\n")
+
+    # (1) Como as funções base da BSpline zeram para valores de parâmetro iguais ao último nó do vetor, para se calcular o valor...
+    # ... do último ponto da BSpline deve-se fazer uma aproximação, pois matematicamente se trata de um limite, e nesse caso a...
+    # ... a precisão deste cálculo será então definida pelo parâmetro h:
+    h = 0.000000000001
+    lastPoint_BSpline = calc_BSpline(BSpline_points, T[-1]-h, D, T)
+
+    # (2) Esta função translada uma lista de pontos para que o primeiro destes seja igual ao passado como parâmetro:
+    Force_C0_BSplineToBezier(lastPoint_BSpline, Bezier_Points)
+    # Obs.: note que apesar do vetor de nós ser definido com multiplicidade nos nós incial e final para que a curva B-Spline passe...
+    # ... por estes, mesmo que este não fosse o caso a função acima iria garantir continuidade C0 pois ela irá transladar a curva...
+    # ... Bézier de acordo com o último ponto calculado da curva B-Spline e não de acordo com o último ponto de controle da mesma.
+
+    # (3) Este bloco de código ajusta o limites dos eixos do gráfico para melhor visualização:
+    P_max, P_min = get_MaxValues([Bezier_Points, BSpline_points])
+    plt.xlim(P_min.x - 1, P_max.x + 1)
+    plt.ylim(P_min.y - 1, P_max.y + 1)
+
+    # (4) Este bloco de código plota a curva Bézier e seu polígono de controle:
+    Plot_Poligon(Bezier_Points, "green")
+    Plot_Bezier(Bezier_Points, "green")
+
+    # (5) Este bloco de código plota a curva B-Spline e seu polígono de controle:
+    Plot_Poligon(BSpline_points, "orange")
+    Plot_BSpline(BSpline_points, D, T)
 
     plt.savefig("Exemplo-Join-C0-BSpline-Bezier.png")
     plt.show()
