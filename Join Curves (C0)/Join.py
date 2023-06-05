@@ -140,7 +140,7 @@ def Plot_Poligon(points : list, c : str) -> None:
 def getVector(p0 : Point, p1 : Point) -> Point:
     return Point(p1.x - p0.x, p1.y - p0.y, p1.z - p0.z)
 
-def Force_C0_BSplineToBezier(lastPoint_BSpline, Bezier_Points):
+def Force_C0_BSplineToBezier(lastPoint_BSpline, Bezier_Points) -> None:
     delta = getVector(Bezier_Points[0], lastPoint_BSpline)
     for point in Bezier_Points:
         point.x += delta.x
