@@ -95,6 +95,7 @@ def calc_BSpline(points, u, D, T):
     return p
 
 def getKnots(n, D):
+    # Caso se queira alterar o vetor de nós pode-se alterar esta parte do código:
     T = []
     for j in range(0, n+D+1):
         if(j < D):
@@ -103,23 +104,25 @@ def getKnots(n, D):
             T.append(j-D+1)
         else:
             T.append(n-D+2)
+        # T.append(j/(n+D))
+        # T.append(j)
     return T
 
 def Plot_BSpline(points, D, T):
 
     n = len(points)-1
-    print(T)
+    print("Vetor de nós (B-spline): " + str(T))
 
-    U = np.linspace(0.0, n-D+2, 1000)
+    # A curva B-spline é definida apenas no intervalo em que T[D-1] <= u < T[n+1], pois este é o intervalo em que...
+    # ... a soma das funções base é igual à 1 (isso pode ser provado por indução):
+    U = np.linspace(T[D-1], T[n+1], 1000)
 
-    segments = list(set(T))
-    print(segments)
-
-    for i, segment in enumerate(segments[0:-1]):
-        piece = [calc_BSpline(points, ui, D, T) for ui in U if segment <= ui <= segments[i+1]]
-        X = [point.x for point in piece[0:-1]]
-        Y = [point.y for point in piece[0:-1]]
-        Z = [point.z for point in piece[0:-1]]
+    # Os intervalos 
+    for i in range(D-1, n+1):
+        piece = [calc_BSpline(points, ui, D, T) for ui in U if T[i] <= ui < T[i+1]]
+        X = [point.x for point in piece]
+        Y = [point.y for point in piece]
+        Z = [point.z for point in piece]
 
         hexadecimal = "#"+''.join([random.choice('ABCDEF0123456789') for i in range(6)])
         plt.plot(X, Y, color = hexadecimal)
@@ -181,14 +184,15 @@ if __name__ == "__main__":
                      Point(2.5, 1.5, 0), Point(1.5, 0.5, 0), Point(3, -1.5, 0), 
                      Point(4, -2, 0), Point(5, -3, 0)]
 
-    Flag = 2
-    print("Digite o número de acordo com o desejado: \n 1 - Bézier seguida de BSpline \n 2 - B-Spline seguida de Bézier\n")
-
     # (1) Como as funções base da BSpline zeram para valores de parâmetro iguais ao último nó do vetor, para se calcular o valor...
     # ... do último ponto da BSpline deve-se fazer uma aproximação, pois matematicamente se trata de um limite, e nesse caso a...
     # ... a precisão deste cálculo será então definida pelo parâmetro h:
-    h = 0.000000000001
-    lastPoint_BSpline = calc_BSpline(BSpline_points, T[-1]-h, D, T)
+    h = 0.00000001
+    lastPoint_BSpline = calc_BSpline(BSpline_points, T[n+1]-h, D, T)
+    # Obs.: o último ponto da B-spline ocorre em u = T[n+1] pois a curva é definida apenas no intervalo [T[D-1], T[n+1]), visto...
+    # ... que este é o intervalo no qual a soma das funções base é igual à 1.
+
+    print("Conection Point = " + PointToString(lastPoint_BSpline))
 
     # (2) Esta função translada uma lista de pontos para que o primeiro destes seja igual ao passado como parâmetro:
     Force_C0_BSplineToBezier(lastPoint_BSpline, Bezier_Points)
