@@ -127,31 +127,34 @@ def Bspline_EndPoint_Derivative(Bspline_points, D, T):
     return Point(Q.x * term, Q.y * term, Q.z * term)
 
 def getKnots(n, D):
+    # Caso se queira alterar o vetor de nós pode-se alterar esta parte do código:
     T = []
     for j in range(0, n+D+1):
-        if(j < D):
-            T.append(0)
-        elif(D <= j <= n):
-            T.append(j-D+1)
-        else:
-            T.append(n-D+2)
+        # if(j < D):
+        #     T.append(0)
+        # elif(D <= j <= n):
+        #     T.append(j-D+1)
+        # else:
+        #     T.append(n-D+2)
+        # T.append(j/(n+D))
+        T.append(j)
     return T
 
 def Plot_Bspline(points, D, T):
 
     n = len(points)-1
-    print(T)
+    print("Vetor de nós (B-spline): " + str(T))
 
-    U = np.linspace(0.0, n-D+2, 1000)
+    # A curva B-spline é definida apenas no intervalo em que T[D-1] <= u < T[n+1], pois este é o intervalo em que...
+    # ... a soma das funções base é igual à 1 (isso pode ser provado por indução):
+    U = np.linspace(T[D-1], T[n+1], 1000)
 
-    segments = list(set(T))
-    print(segments)
-
-    for i, segment in enumerate(segments[0:-1]):
-        piece = [calc_Bspline(points, ui, D, T) for ui in U if segment <= ui <= segments[i+1]]
-        X = [point.x for point in piece[0:-1]]
-        Y = [point.y for point in piece[0:-1]]
-        Z = [point.z for point in piece[0:-1]]
+    # Os intervalos 
+    for i in range(D-1, n+1):
+        piece = [calc_Bspline(points, ui, D, T) for ui in U if T[i] <= ui < T[i+1]]
+        X = [point.x for point in piece]
+        Y = [point.y for point in piece]
+        Z = [point.z for point in piece]
 
         hexadecimal = "#"+''.join([random.choice('ABCDEF0123456789') for i in range(6)])
         plt.plot(X, Y, color = hexadecimal)
@@ -180,10 +183,11 @@ def Force_C0_BsplineToBezier(lastPoint_Bspline, Bezier_Points) -> None:
         point.z += delta.z
 
 def Force_C1_BsplineToBezier(Bspline_Points, Bezier_Points, D, T, h):
-    # dS = calc_derivative_Bspline(Bspline_Points, T[-1]-h, D, T, 1)
+    n = len(Bspline_Points)-1
+    # dS = calc_derivative_Bspline(Bspline_Points, T[n+1]-h, D, T, 1)
     dS = Bspline_EndPoint_Derivative(Bspline_Points, D, T)
     print("dS(", T[-1], ") = (", dS.x, ",", dS.y, ",", dS.z, ")")
-    m = len(Bezier_Points) - 1
+    m = len(Bezier_Points)-1
     B0 = Bezier_Points[0]
     B1 = Point(dS.x/m + B0.x, dS.y/m + B0.y, dS.z/m + B0.z)
     Bezier_Points[1] = B1
@@ -210,14 +214,14 @@ if __name__ == "__main__":
     # Pontos de controle da curva B-Spline:
     Bspline_Points = [Point(0, 0, 0), Point(0, 1.5, 0), Point(1.25, 2, 0),
                         Point(2.5, 1.5, 0), Point(1.5, 0.5, 0), Point(4, -1.5, 0), 
-                        Point(4, 0, 0), Point(5, 1, 0), Point(6, 1.2, 0)]
+                        Point(4, 0, 0), Point(5, 2, 0), Point(6, 0.2, 0)]
     # Parâmetros da B-Spline:
     D = 4
     n = len(Bspline_Points)-1
     T = getKnots(n, D)
 
     # Pontos de controle da curva Bézier:
-    Bezier_Points = [Point(2, 1, 0), Point(0.5, 1, 0), Point(1.25, 2, 0) , Point(2.5, 1.5, 0), 
+    Bezier_Points = [Point(2, 1, 0), Point(0.5, 1, 0), Point(1.25, 0, 0) , Point(2.5, 1.5, 0), 
                     Point(1.5, 0.5, 0), Point(4, -1.5, 0), Point(4, 0, 0), Point(5, 1, 0)]
 
     Flag = 2
@@ -227,7 +231,9 @@ if __name__ == "__main__":
     # ... do último ponto da Bspline deve-se fazer uma aproximação, pois matematicamente se trata de um limite, e nesse caso a...
     # ... a precisão deste cálculo será então definida pelo parâmetro h:
     h = 0.000000000001
-    lastPoint_Bspline = calc_Bspline(Bspline_Points, T[-1]-h, D, T)
+    lastPoint_Bspline = calc_Bspline(Bspline_Points, T[n+1]-h, D, T)
+    # Obs.: o último ponto da B-spline ocorre em u = T[n+1] pois a curva é definida apenas no intervalo [T[D-1], T[n+1]), visto...
+    # ... que este é o intervalo no qual a soma das funções base é igual à 1.
 
     # (2) Esta função translada uma lista de pontos para que o primeiro destes seja igual ao passado como parâmetro:
     Force_C0_BsplineToBezier(lastPoint_Bspline, Bezier_Points)
