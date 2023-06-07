@@ -98,14 +98,14 @@ def getKnots(n, D):
     # Caso se queira alterar o vetor de nós pode-se alterar esta parte do código:
     T = []
     for j in range(0, n+D+1):
-        if(j < D):
-            T.append(0)
-        elif(D <= j <= n):
-            T.append(j-D+1)
-        else:
-            T.append(n-D+2)
+        # if(j < D):
+        #     T.append(0)
+        # elif(D <= j <= n):
+        #     T.append(j-D+1)
+        # else:
+        #     T.append(n-D+2)
         # T.append(j/(n+D))
-        # T.append(j)
+        T.append(j)
     return T
 
 def Plot_BSpline(points, D, T):
@@ -117,7 +117,7 @@ def Plot_BSpline(points, D, T):
     # ... a soma das funções base é igual à 1 (isso pode ser provado por indução):
     U = np.linspace(T[D-1], T[n+1], 1000)
 
-    # Os intervalos 
+    # Os intervalos entre vetores de nós são os locais da reta real onde diferentes funções base são diferentes de zero:
     for i in range(D-1, n+1):
         piece = [calc_BSpline(points, ui, D, T) for ui in U if T[i] <= ui < T[i+1]]
         X = [point.x for point in piece]

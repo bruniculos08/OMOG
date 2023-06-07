@@ -23,7 +23,7 @@ def lerp(u : float, p0 : Point, p1 : Point) -> Point:
     z = u*p0.z + (1-u)*p1.z
     return Point(x, y, z)
 
-def calc_bezier(u : float, points : list) -> Point:
+def calc_Bezier(u : float, points : list) -> Point:
     temp = deepcopy(points)
 
     n = len(temp) - 1
@@ -33,10 +33,40 @@ def calc_bezier(u : float, points : list) -> Point:
 
     return temp[0]
 
+def dk_B_func(u, i, n, k):
+    if((i > n or i < 0) and k == 0):
+        return 0
+
+    if(k == 0):
+        return factorial(n)/(factorial(i)*factorial(n-i)) * pow(u, i) * pow(1-u, n-i)
+
+    first_term = dk_B_func(u, i-1, n-1, k-1)
+    second_term = dk_B_func(u, i, n-1, k-1)
+
+    return n*(first_term - second_term)
+
+def calc_derivative_Bezier(u, Bezier_Points, k):
+    P = Point(0, 0, 0)
+    n = len(Bezier_Points)-1
+    for i in range(0, n+1):
+        dk_B = dk_B_func(u, i, n, k)
+        P.x += Bezier_Points[i].x * dk_B
+        P.y += Bezier_Points[i].y * dk_B
+        P.z += Bezier_Points[i].z * dk_B
+    return P
+
+def Bezier_EndPoint_SecondDerivative(Bezier_Points):
+    n = len(Bezier_Points)-1
+    x = n*(n-1)*(Bezier_Points[2].x - 2*Bezier_Points[1].x + Bezier_Points[0].x)
+    y = n*(n-1)*(Bezier_Points[2].y - 2*Bezier_Points[1].y + Bezier_Points[0].y)
+    z = n*(n-1)*(Bezier_Points[2].z - 2*Bezier_Points[1].z + Bezier_Points[0].z)
+    dB = Point(x, y, z)
+    return dB
+
 def Plot_Bezier(points : list, c : str):
 
     U = np.linspace(0.0, 1, 1000)
-    P = [calc_bezier(ui, points) for ui in U]
+    P = [calc_Bezier(ui, points) for ui in U]
 
     X = [point.x for point in P]
     Y = [point.y for point in P]
@@ -95,6 +125,7 @@ def calc_Bspline(points, u, D, T):
     return p
 
 def dk_N_func(u, i, D, T, k):
+
     first_term = 0
     second_term = 0
 
@@ -104,8 +135,8 @@ def dk_N_func(u, i, D, T, k):
     if(T[i+D] - T[i+1] != 0):
         second_term = (D-1)/(T[i+D] - T[i+1])
 
-    if(k == 1):
-        result = first_term * N_func(u, i, D-1, T) - second_term * N_func(u, i+1, D-1, T)
+    if(k == 0):
+        result = N_func(u, i, D, T)
     else:
         result = first_term * dk_N_func(u, i, D-1, T, k-1) - second_term * dk_N_func(u, i+1, D-1, T, k-1)
     return result
@@ -120,24 +151,18 @@ def calc_derivative_Bspline(points, u, D, T, k):
         p.z += points[i].z * dN_i_D
     return p
 
-def Bspline_EndPoint_Derivative(Bspline_points, D, T):
-    n = len(Bspline_points)-1
-    Q = getVector(Bspline_points[n-1], Bspline_points[n])
-    term = (D-1)/(T[n+D-1] - T[n])
-    return Point(Q.x * term, Q.y * term, Q.z * term)
-
 def getKnots(n, D):
     # Caso se queira alterar o vetor de nós pode-se alterar esta parte do código:
     T = []
     for j in range(0, n+D+1):
-        # if(j < D):
-        #     T.append(0)
-        # elif(D <= j <= n):
-        #     T.append(j-D+1)
-        # else:
-        #     T.append(n-D+2)
+        if(j < D):
+            T.append(0)
+        elif(D <= j <= n):
+            T.append(j-D+1)
+        else:
+            T.append(n-D+2)
         # T.append(j/(n+D))
-        T.append(j)
+        # T.append(j**5)
     return T
 
 def Plot_Bspline(points, D, T):
@@ -149,7 +174,7 @@ def Plot_Bspline(points, D, T):
     # ... a soma das funções base é igual à 1 (isso pode ser provado por indução):
     U = np.linspace(T[D-1], T[n+1], 1000)
 
-    # Os intervalos 
+    # Os intervalos entre vetores de nós são os locais da reta real onde diferentes funções base são diferentes de zero:
     for i in range(D-1, n+1):
         piece = [calc_Bspline(points, ui, D, T) for ui in U if T[i] <= ui < T[i+1]]
         X = [point.x for point in piece]
@@ -158,6 +183,7 @@ def Plot_Bspline(points, D, T):
 
         hexadecimal = "#"+''.join([random.choice('ABCDEF0123456789') for i in range(6)])
         plt.plot(X, Y, color = hexadecimal)
+
 
 """
 Funções para continuidade entre as curvas B-Spline e plotagem de polígonos de controle:
@@ -183,14 +209,16 @@ def Force_C0_BsplineToBezier(lastPoint_Bspline, Bezier_Points) -> None:
         point.z += delta.z
 
 def Force_C1_BsplineToBezier(Bspline_Points, Bezier_Points, D, T, h):
-    n = len(Bspline_Points)-1
-    # dS = calc_derivative_Bspline(Bspline_Points, T[n+1]-h, D, T, 1)
-    dS = Bspline_EndPoint_Derivative(Bspline_Points, D, T)
-    print("dS(", T[-1], ") = (", dS.x, ",", dS.y, ",", dS.z, ")")
-    m = len(Bezier_Points)-1
+    dS = calc_derivative_Bspline(Bspline_Points, T[n+1]-h, D, T, 1)
+    print("S'(" + str(T[-1]) + ") = " + PointToString(dS))
+
+    m = len(Bezier_Points) - 1
     B0 = Bezier_Points[0]
     B1 = Point(dS.x/m + B0.x, dS.y/m + B0.y, dS.z/m + B0.z)
     Bezier_Points[1] = B1
+
+    dB = calc_derivative_Bezier(0, Bezier_Points, 1)
+    print("B'(" + str(0) + ") = " + PointToString(dB) + "\n")
 
 def PointToString(P : Point) -> str:
     return '(' + str(P.x) + ',' + str(P.y) + ',' + str(P.z) + ')'
@@ -212,28 +240,24 @@ def get_MaxValues(listsOfPoints : list) -> Point:
 if __name__ == "__main__":
 
     # Pontos de controle da curva B-Spline:
-    Bspline_Points = [Point(0, 0, 0), Point(0, 1.5, 0), Point(1.25, 2, 0),
-                        Point(2.5, 1.5, 0), Point(1.5, 0.5, 0), Point(4, -1.5, 0), 
-                        Point(4, 0, 0), Point(5, 2, 0), Point(6, 0.2, 0)]
+    Bspline_Points = [Point(0, 1, 0), Point(1, 1.5, 0), Point(2, 2, 0),
+                        Point(3, 1.5, 0), Point(4, 0.5, 0), Point(5, -1.5, 0), 
+                        Point(6, 0, 0), Point(7, 4, 0), Point(6.5, 2.8, 0)]
+    
     # Parâmetros da B-Spline:
     D = 4
     n = len(Bspline_Points)-1
     T = getKnots(n, D)
 
     # Pontos de controle da curva Bézier:
-    Bezier_Points = [Point(2, 1, 0), Point(0.5, 1, 0), Point(1.25, 0, 0) , Point(2.5, 1.5, 0), 
-                    Point(1.5, 0.5, 0), Point(4, -1.5, 0), Point(4, 0, 0), Point(5, 1, 0)]
-
-    Flag = 2
-    print("Digite o número de acordo com o desejado: \n 1 - Bézier seguida de Bspline \n 2 - B-Spline seguida de Bézier\n")
+    Bezier_Points = [Point(1, -1, 0), Point(2, 2, 0), Point(1.25, 3, 0) , Point(2.5, 3.5, 0), 
+                    Point(1.5, 5.5, 0), Point(4, -0.5, 0), Point(4, 0, 0), Point(5, 2, 0)]
 
     # (1) Como as funções base da Bspline zeram para valores de parâmetro iguais ao último nó do vetor, para se calcular o valor...
     # ... do último ponto da Bspline deve-se fazer uma aproximação, pois matematicamente se trata de um limite, e nesse caso a...
     # ... a precisão deste cálculo será então definida pelo parâmetro h:
-    h = 0.000000000001
+    h = 0.00000000000001
     lastPoint_Bspline = calc_Bspline(Bspline_Points, T[n+1]-h, D, T)
-    # Obs.: o último ponto da B-spline ocorre em u = T[n+1] pois a curva é definida apenas no intervalo [T[D-1], T[n+1]), visto...
-    # ... que este é o intervalo no qual a soma das funções base é igual à 1.
 
     # (2) Esta função translada uma lista de pontos para que o primeiro destes seja igual ao passado como parâmetro:
     Force_C0_BsplineToBezier(lastPoint_Bspline, Bezier_Points)
@@ -255,7 +279,7 @@ if __name__ == "__main__":
     Plot_Poligon(Bezier_Points, "blue")
     Plot_Poligon(Bspline_Points, "orange")
     
-    # (4) Este bloco de código plota a curva Bézier e a curva B-spline:
+    # (6) Este bloco de código plota a curva Bézier e a curva B-spline:
     Plot_Bezier(Bezier_Points, "green")
     Plot_Bspline(Bspline_Points, D, T)
 
