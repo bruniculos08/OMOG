@@ -18,9 +18,9 @@ class Point:
 Funções relacionadas a curva de Bézier:
 """
 def lerp(u : float, p0 : Point, p1 : Point) -> Point:
-    x = u*p0.x + (1-u)*p1.x
-    y = u*p0.y + (1-u)*p1.y
-    z = u*p0.z + (1-u)*p1.z
+    x = u*p1.x + (1-u)*p0.x
+    y = u*p1.y + (1-u)*p0.y
+    z = u*p1.z + (1-u)*p0.z
     return Point(x, y, z)
 
 def calc_Bezier(u : float, points : list) -> Point:
@@ -30,6 +30,7 @@ def calc_Bezier(u : float, points : list) -> Point:
     for i in range(n, -1, -1):
         for j in range(0, i):
             temp[j] = lerp(u, temp[j], temp[j+1])
+
 
     return temp[0]
 
@@ -73,6 +74,9 @@ def Plot_Bezier(points : list, c : str):
     Z = [point.z for point in P]
 
     plt.plot(X, Y, color = c)
+
+    # Marca o último ponto da curva para que fique mais fácil verificá-lo:
+    plt.plot(X[0], Y[0], '.', linestyle="--", color = "black")
 
 def Plot_Bezier_kDerivative(points : list, c : str, k : int):
 
@@ -175,14 +179,14 @@ def getKnots(n, D):
     # Caso se queira alterar o vetor de nós pode-se alterar esta parte do código:
     T = []
     for j in range(0, n+D+1):
-        # if(j < D):
-        #     T.append(0)
-        # elif(D <= j <= n):
-        #     T.append(j-D+1)
-        # else:
-        #     T.append(n-D+2)
+        if(j < D):
+            T.append(0)
+        elif(D <= j <= n):
+            T.append(j-D+1)
+        else:
+            T.append(n-D+2)
         # T.append(j/(n+D))
-        T.append(j**5)
+        # T.append(j**5)
     return T
 
 def Plot_Bspline(points, D, T):
@@ -192,7 +196,7 @@ def Plot_Bspline(points, D, T):
 
     # A curva B-spline é definida apenas no intervalo em que T[D-1] <= u < T[n+1], pois este é o intervalo em que...
     # ... a soma das funções base é igual à 1 (isso pode ser provado por indução):
-    U = np.linspace(T[D-1], T[n+1]+1, 10000)
+    U = np.linspace(T[D-1], T[n+1]+3, 10000)
     # Obs.: é adicionado 1 à T[n+1] para que haja mais parâmetros perto do ponto final
 
     # Os intervalos entre vetores de nós são os locais da reta real onde diferentes funções base são diferentes de zero:
@@ -204,6 +208,9 @@ def Plot_Bspline(points, D, T):
 
         hexadecimal = "#"+''.join([random.choice('ABCDEF0123456789') for i in range(6)])
         plt.plot(X, Y, color = hexadecimal)
+
+        if(i == n):
+            plt.plot(X[-1], Y[-1], '.', linestyle="--", color = "black")
 
 def Plot_Bspline_kDerivative(points, D, k):
 
@@ -306,7 +313,7 @@ if __name__ == "__main__":
     # Pontos de controle da curva B-Spline:
     Bspline_Points = [Point(0, 1, 0), Point(1, 1.5, 0), Point(2, 2, 0),
                         Point(3, 1.5, 0), Point(4, 0.5, 0), Point(5, -1.5, 0), 
-                        Point(6, 0, 0), Point(7, 4, 0), Point(7.5, 3.8, 0)]
+                        Point(6, 9, 0), Point(7, 4, 0), Point(8, 3.8, 0)]
     
     # Parâmetros da B-Spline:
     D = 4
@@ -325,7 +332,7 @@ if __name__ == "__main__":
     # (1) Como as funções base da Bspline zeram para valores de parâmetro iguais ao último nó do vetor, para se calcular o valor...
     # ... do último ponto da Bspline deve-se fazer uma aproximação, pois matematicamente se trata de um limite, e nesse caso a...
     # ... a precisão deste cálculo será então definida pelo parâmetro h:
-    h = 0.00000000000001
+    h = 2.2250738585072014e-10
     lastPoint_Bspline = calc_Bspline(Bspline_Points, T[n+1]-h, D, T)
 
     # (2) Esta função translada uma lista de pontos para que o primeiro destes seja igual ao passado como parâmetro:
@@ -351,11 +358,11 @@ if __name__ == "__main__":
 
     if(flag == 0):
         # (5) Este bloco de código plota o polígono de controle de cada uma das curvas:
-        Plot_Poligon(Bezier_Points, "blue")
         Plot_Poligon(Bspline_Points, "orange")
+        Plot_Poligon(Bezier_Points, "blue")
         # (6) Este bloco de código plota a curva Bézier e a curva B-spline:
-        Plot_Bezier(Bezier_Points, "green")
         Plot_Bspline(Bspline_Points, D, T)
+        Plot_Bezier(Bezier_Points, "green")
     
     if(flag == 1):
         # (7) Gráficos das derivadas de primeira ordem:
