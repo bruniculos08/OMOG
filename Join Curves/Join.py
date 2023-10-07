@@ -181,14 +181,14 @@ def getKnots(n, D):
     # Caso se queira alterar o vetor de nós pode-se alterar esta parte do código:
     T = []
     for j in range(0, n+D+1):
-        if(j < D):
-            T.append(0)
-        elif(D <= j <= n):
-            T.append(j-D+1)
-        else:
-            T.append(n-D+2)
+        # if(j < D):
+        #     T.append(0)
+        # elif(D <= j <= n):
+        #     T.append(j-D+1)
+        # else:
+        #     T.append(n-D+2)
         # T.append(j/(n+D))
-        # T.append(j**3)
+        T.append(j**3)
     return T
 
 def Plot_Bspline(points, D, T):
